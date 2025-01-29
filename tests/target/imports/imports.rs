@@ -22,9 +22,9 @@ use list::{
 
 use test::{/* A */ self /* B */, Other /* C */};
 
-pub use rustc_ast::ast::{Expr, ExprAssign, ExprCall, ExprMethodCall, ExprPath, Expr_};
-use rustc_ast::{self};
 use Foo::{Bar, Baz};
+pub use rustc_ast::ast::{Expr, Expr_, ExprAssign, ExprCall, ExprMethodCall, ExprPath};
+use rustc_ast::{self};
 use {Bar /* comment */, /* Pre-comment! */ Foo};
 
 use std::io;
@@ -59,10 +59,10 @@ use foo::{self as bar, baz};
 use foo::{baz, qux as bar};
 
 // With absolute paths
+use Foo;
 use foo;
 use foo::Bar;
 use foo::{Bar, Baz};
-use Foo;
 use {Bar, Baz};
 
 // Root globs

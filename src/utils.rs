@@ -10,7 +10,7 @@ use rustc_span::{BytePos, LocalExpnId, Span, Symbol, SyntaxContext, sym, symbol}
 use unicode_width::UnicodeWidthStr;
 
 use crate::comment::{CharClasses, FullCodeCharKind, LineClasses, filter_normal_code};
-use crate::config::{Config, StyleEdition};
+use crate::config::Config;
 use crate::rewrite::RewriteContext;
 use crate::shape::{Indent, Shape};
 
@@ -596,10 +596,10 @@ pub(crate) fn trim_left_preserve_layout(
             };
 
             // just InString{Commented} in order to allow the start of a string to be indented
-            let new_veto_trim_value = (kind == FullCodeCharKind::InString
-                || (config.style_edition() >= StyleEdition::Edition2024
-                    && kind == FullCodeCharKind::InStringCommented))
-                && !line.ends_with('\\');
+            let new_veto_trim_value = matches!(
+                kind,
+                FullCodeCharKind::InString | FullCodeCharKind::InStringCommented
+            ) && !line.ends_with('\\');
             let line = if veto_trim || new_veto_trim_value {
                 veto_trim = new_veto_trim_value;
                 trimmed = false;
@@ -612,11 +612,7 @@ pub(crate) fn trim_left_preserve_layout(
             // Because there is a veto against trimming and indenting lines within a string,
             // such lines should not be taken into account when computing the minimum.
             match kind {
-                FullCodeCharKind::InStringCommented | FullCodeCharKind::EndStringCommented
-                    if config.style_edition() >= StyleEdition::Edition2024 =>
-                {
-                    None
-                }
+                FullCodeCharKind::InStringCommented | FullCodeCharKind::EndStringCommented => None,
                 FullCodeCharKind::InString | FullCodeCharKind::EndString => None,
                 _ => prefix_space_width,
             }
@@ -657,10 +653,8 @@ pub(crate) fn indent_next_line(kind: FullCodeCharKind, line: &str, config: &Conf
         // formatting the code block, therefore the string's indentation needs
         // to be adjusted for the code surrounding the code block.
         config.format_strings() && line.ends_with('\\')
-    } else if config.style_edition() >= StyleEdition::Edition2024 {
-        !kind.is_commented_string()
     } else {
-        true
+        !kind.is_commented_string()
     }
 }
 

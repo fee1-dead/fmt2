@@ -1,10 +1,10 @@
 // rustfmt-edition: 2018
 
+use ::*;
+use ::{bar, foo};
 use ::baz::{bar, foo};
 use ::ignore;
 use ::ignore::some::more;
-use ::*;
-use ::{bar, foo};
 
 fn main() {
     println!("Hello, world!");

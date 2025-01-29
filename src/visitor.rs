@@ -8,7 +8,7 @@ use tracing::debug;
 
 use crate::attr::*;
 use crate::comment::{CodeCharKind, CommentCodeSlices, contains_comment, rewrite_comment};
-use crate::config::{BraceStyle, Config, MacroSelector, StyleEdition};
+use crate::config::{BraceStyle, Config, MacroSelector};
 use crate::coverage::transform_missing_snippet;
 use crate::items::{
     FnBraceStyle, FnSig, ItemVisitorKind, StaticParts, StructParts, format_impl, format_trait,
@@ -290,9 +290,7 @@ impl<'b, 'a: 'b> FmtVisitor<'a> {
 
                     let mut comment_shape =
                         Shape::indented(self.block_indent, config).comment(config);
-                    if self.config.style_edition() >= StyleEdition::Edition2024
-                        && comment_on_same_line
-                    {
+                    if comment_on_same_line {
                         self.push_str(" ");
                         // put the first line of the comment on the same line as the
                         // block's last line

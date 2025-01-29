@@ -1,4 +1,3 @@
-// rustfmt-style_edition: 2024
 
 // Based on the issue description
 pub trait PrettyPrinter<'tcx>:

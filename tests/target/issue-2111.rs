@@ -11,6 +11,7 @@ use super::{
     ModelRequestGraph,
     ModelSelector,
     RequestDescription,
+    SCHEMA_VERSIONS,
     StringMap,
     Switch,
     //    ModelMetaData,
@@ -22,5 +23,4 @@ use super::{
     //    RestResponse,
     //    RestResponseCode,
     //    UniformHolding
-    SCHEMA_VERSIONS,
 };

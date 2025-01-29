@@ -1,4 +1,3 @@
-// rustfmt-edition: 2021
 // rustfmt-max_width: 125
 pub use ::dafny_runtime::Sequence;
 pub use ::std::rc::Rc;

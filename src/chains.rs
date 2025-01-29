@@ -63,7 +63,7 @@ use rustc_span::{BytePos, Span, symbol};
 use tracing::debug;
 
 use crate::comment::{CharClasses, FullCodeCharKind, RichChar, rewrite_comment};
-use crate::config::{IndentStyle, StyleEdition};
+use crate::config::IndentStyle;
 use crate::expr::rewrite_call;
 use crate::lists::extract_pre_comment;
 use crate::macros::convert_try_mac;
@@ -297,15 +297,10 @@ impl Rewrite for ChainItem {
                 Self::rewrite_method_call(segment.ident, types, exprs, self.span, context, shape)?
             }
             ChainItemKind::StructField(ident) => format!(".{}", rewrite_ident(context, ident)),
-            ChainItemKind::TupleField(ident, nested) => format!(
-                "{}.{}",
-                if nested && context.config.style_edition() <= StyleEdition::Edition2021 {
-                    " "
-                } else {
-                    ""
-                },
-                rewrite_ident(context, ident)
-            ),
+            // FIXME(new): why is `nested` unused here?
+            ChainItemKind::TupleField(ident, _nested) => {
+                format!(".{}", rewrite_ident(context, ident))
+            }
             ChainItemKind::Await => ".await".to_owned(),
             ChainItemKind::Comment(ref comment, _) => {
                 rewrite_comment(comment, false, shape, context.config)?

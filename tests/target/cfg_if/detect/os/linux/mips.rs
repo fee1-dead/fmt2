@@ -1,7 +1,7 @@
 //! Run-time feature detection for MIPS on Linux.
 
 use super::auxvec;
-use crate::detect::{bit, cache, Feature};
+use crate::detect::{Feature, bit, cache};
 
 /// Performs run-time feature detection.
 #[inline]

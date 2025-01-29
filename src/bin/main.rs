@@ -19,7 +19,7 @@ use getopts::{Matches, Options};
 
 use crate::rustfmt::{
     CliOptions, Color, Config, Edition, EmitMode, FileLines, FileName,
-    FormatReportFormatterBuilder, Input, Session, StyleEdition, Verbosity, Version, load_config,
+    FormatReportFormatterBuilder, Input, Session, Verbosity, Version, load_config,
 };
 
 const BUG_REPORT_URL: &str = "https://github.com/rust-lang/rustfmt/issues/new?labels=bug";
@@ -536,7 +536,6 @@ struct GetOptsOptions {
     backup: bool,
     check: bool,
     edition: Option<Edition>,
-    style_edition: Option<StyleEdition>,
     color: Option<Color>,
     file_lines: FileLines, // Default is all lines in all files.
     unstable_features: bool,
@@ -628,8 +627,8 @@ impl GetOptsOptions {
             options.edition = Some(edition_from_edition_str(edition_str)?);
         }
 
-        if let Some(ref edition_str) = matches.opt_str("style-edition") {
-            options.style_edition = Some(style_edition_from_style_edition_str(edition_str)?);
+        if let Some(ref _edition_str) = matches.opt_str("style-edition") {
+            // FIXME(new): removed
         }
 
         if matches.opt_present("backup") {
@@ -704,9 +703,6 @@ impl CliOptions for GetOptsOptions {
         if let Some(edition) = self.edition {
             config.set_cli().edition(edition);
         }
-        if let Some(edition) = self.style_edition {
-            config.set_cli().style_edition(edition);
-        }
         if self.check {
             config.set_cli().emit_mode(EmitMode::Diff);
         } else if let Some(emit_mode) = self.emit_mode {
@@ -737,12 +733,6 @@ impl CliOptions for GetOptsOptions {
             .map_or(self.edition, |e| Edition::from_str(e).ok())
     }
 
-    fn style_edition(&self) -> Option<StyleEdition> {
-        self.inline_config
-            .get("style_edition")
-            .map_or(self.style_edition, |se| StyleEdition::from_str(se).ok())
-    }
-
     fn version(&self) -> Option<Version> {
         self.inline_config
             .get("version")
@@ -761,17 +751,6 @@ fn edition_from_edition_str(edition_str: &str) -> Result<Edition> {
     }
 }
 
-fn style_edition_from_style_edition_str(edition_str: &str) -> Result<StyleEdition> {
-    match edition_str {
-        "2015" => Ok(StyleEdition::Edition2015),
-        "2018" => Ok(StyleEdition::Edition2018),
-        "2021" => Ok(StyleEdition::Edition2021),
-        "2024" => Ok(StyleEdition::Edition2024),
-        "2027" => Ok(StyleEdition::Edition2027),
-        _ => Err(format_err!("Invalid value for `--style-edition`")),
-    }
-}
-
 fn emit_mode_from_emit_str(emit_str: &str) -> Result<EmitMode> {
     match emit_str {
         "files" => Ok(EmitMode::Files),
@@ -780,187 +759,5 @@ fn emit_mode_from_emit_str(emit_str: &str) -> Result<EmitMode> {
         "checkstyle" => Ok(EmitMode::Checkstyle),
         "json" => Ok(EmitMode::Json),
         _ => Err(format_err!("Invalid value for `--emit`")),
-    }
-}
-
-#[cfg(test)]
-#[allow(dead_code)]
-mod test {
-    use super::*;
-    use rustfmt_config_proc_macro::nightly_only_test;
-
-    fn get_config<O: CliOptions>(path: Option<&Path>, options: Option<O>) -> Config {
-        load_config(path, options).unwrap().0
-    }
-
-    #[nightly_only_test]
-    #[test]
-    fn flag_sets_style_edition_override_correctly() {
-        let mut options = GetOptsOptions::default();
-        options.style_edition = Some(StyleEdition::Edition2024);
-        let config = get_config(None, Some(options));
-        assert_eq!(config.style_edition(), StyleEdition::Edition2024);
-    }
-
-    #[nightly_only_test]
-    #[test]
-    fn edition_sets_style_edition_override_correctly() {
-        let mut options = GetOptsOptions::default();
-        options.edition = Some(Edition::Edition2024);
-        let config = get_config(None, Some(options));
-        assert_eq!(config.style_edition(), StyleEdition::Edition2024);
-    }
-
-    #[nightly_only_test]
-    #[test]
-    fn version_sets_style_edition_override_correctly() {
-        let mut options = GetOptsOptions::default();
-        options.inline_config = HashMap::from([("version".to_owned(), "Two".to_owned())]);
-        let config = get_config(None, Some(options));
-        assert_eq!(config.style_edition(), StyleEdition::Edition2024);
-        assert_eq!(config.overflow_delimited_expr(), true);
-    }
-
-    #[nightly_only_test]
-    #[test]
-    fn version_config_file_sets_style_edition_override_correctly() {
-        let options = GetOptsOptions::default();
-        let config_file = Some(Path::new("tests/config/style-edition/just-version"));
-        let config = get_config(config_file, Some(options));
-        assert_eq!(config.style_edition(), StyleEdition::Edition2024);
-        assert_eq!(config.overflow_delimited_expr(), true);
-    }
-
-    #[nightly_only_test]
-    #[test]
-    fn style_edition_flag_has_correct_precedence_over_edition() {
-        let mut options = GetOptsOptions::default();
-        options.style_edition = Some(StyleEdition::Edition2021);
-        options.edition = Some(Edition::Edition2024);
-        let config = get_config(None, Some(options));
-        assert_eq!(config.style_edition(), StyleEdition::Edition2021);
-    }
-
-    #[nightly_only_test]
-    #[test]
-    fn style_edition_flag_has_correct_precedence_over_version() {
-        let mut options = GetOptsOptions::default();
-        options.style_edition = Some(StyleEdition::Edition2018);
-        options.inline_config = HashMap::from([("version".to_owned(), "Two".to_owned())]);
-        let config = get_config(None, Some(options));
-        assert_eq!(config.style_edition(), StyleEdition::Edition2018);
-    }
-
-    #[nightly_only_test]
-    #[test]
-    fn style_edition_flag_has_correct_precedence_over_edition_version() {
-        let mut options = GetOptsOptions::default();
-        options.style_edition = Some(StyleEdition::Edition2021);
-        options.edition = Some(Edition::Edition2018);
-        options.inline_config = HashMap::from([("version".to_owned(), "Two".to_owned())]);
-        let config = get_config(None, Some(options));
-        assert_eq!(config.style_edition(), StyleEdition::Edition2021);
-    }
-
-    #[nightly_only_test]
-    #[test]
-    fn style_edition_inline_has_correct_precedence_over_edition_version() {
-        let mut options = GetOptsOptions::default();
-        options.edition = Some(Edition::Edition2018);
-        options.inline_config = HashMap::from([
-            ("version".to_owned(), "One".to_owned()),
-            ("style_edition".to_owned(), "2024".to_owned()),
-        ]);
-        let config = get_config(None, Some(options));
-        assert_eq!(config.style_edition(), StyleEdition::Edition2024);
-        assert_eq!(config.overflow_delimited_expr(), true);
-    }
-
-    #[nightly_only_test]
-    #[test]
-    fn style_edition_config_file_trumps_edition_flag_version_inline() {
-        let mut options = GetOptsOptions::default();
-        let config_file = Some(Path::new("tests/config/style-edition/just-style-edition"));
-        options.edition = Some(Edition::Edition2018);
-        options.inline_config = HashMap::from([("version".to_owned(), "One".to_owned())]);
-        let config = get_config(config_file, Some(options));
-        assert_eq!(config.style_edition(), StyleEdition::Edition2024);
-    }
-
-    #[nightly_only_test]
-    #[test]
-    fn style_edition_config_file_trumps_edition_config_and_version_inline() {
-        let mut options = GetOptsOptions::default();
-        let config_file = Some(Path::new(
-            "tests/config/style-edition/style-edition-and-edition",
-        ));
-        options.inline_config = HashMap::from([("version".to_owned(), "Two".to_owned())]);
-        let config = get_config(config_file, Some(options));
-        assert_eq!(config.style_edition(), StyleEdition::Edition2021);
-        assert_eq!(config.edition(), Edition::Edition2024);
-    }
-
-    #[nightly_only_test]
-    #[test]
-    fn version_config_trumps_edition_config_and_flag() {
-        let mut options = GetOptsOptions::default();
-        let config_file = Some(Path::new("tests/config/style-edition/version-edition"));
-        options.edition = Some(Edition::Edition2018);
-        let config = get_config(config_file, Some(options));
-        assert_eq!(config.style_edition(), StyleEdition::Edition2024);
-    }
-
-    #[nightly_only_test]
-    #[test]
-    fn style_edition_config_file_trumps_version_config() {
-        let options = GetOptsOptions::default();
-        let config_file = Some(Path::new(
-            "tests/config/style-edition/version-style-edition",
-        ));
-        let config = get_config(config_file, Some(options));
-        assert_eq!(config.style_edition(), StyleEdition::Edition2021);
-    }
-
-    #[nightly_only_test]
-    #[test]
-    fn style_edition_config_file_trumps_edition_version_config() {
-        let options = GetOptsOptions::default();
-        let config_file = Some(Path::new(
-            "tests/config/style-edition/version-style-edition-and-edition",
-        ));
-        let config = get_config(config_file, Some(options));
-        assert_eq!(config.style_edition(), StyleEdition::Edition2021);
-    }
-
-    #[nightly_only_test]
-    #[test]
-    fn correct_defaults_for_style_edition_loaded() {
-        let mut options = GetOptsOptions::default();
-        options.style_edition = Some(StyleEdition::Edition2024);
-        let config = get_config(None, Some(options));
-        assert_eq!(config.style_edition(), StyleEdition::Edition2024);
-        assert_eq!(config.overflow_delimited_expr(), true);
-    }
-
-    #[nightly_only_test]
-    #[test]
-    fn style_edition_defaults_overridden_from_config() {
-        let options = GetOptsOptions::default();
-        let config_file = Some(Path::new("tests/config/style-edition/overrides"));
-        let config = get_config(config_file, Some(options));
-        assert_eq!(config.style_edition(), StyleEdition::Edition2024);
-        assert_eq!(config.overflow_delimited_expr(), false);
-    }
-
-    #[nightly_only_test]
-    #[test]
-    fn style_edition_defaults_overridden_from_cli() {
-        let mut options = GetOptsOptions::default();
-        let config_file = Some(Path::new("tests/config/style-edition/just-style-edition"));
-        options.inline_config =
-            HashMap::from([("overflow_delimited_expr".to_owned(), "false".to_owned())]);
-        let config = get_config(config_file, Some(options));
-        assert_eq!(config.style_edition(), StyleEdition::Edition2024);
-        assert_eq!(config.overflow_delimited_expr(), false);
     }
 }

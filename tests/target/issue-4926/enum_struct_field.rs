@@ -27,13 +27,11 @@ impl SomeEnumNamedD {
 
 fn main() {
     let kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk = SomeEnumNamedD::f_variant();
-    let something_we_care_about = matches!(
-        kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk,
-        SomeEnumNamedD::F {
+    let something_we_care_about =
+        matches!(kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk, SomeEnumNamedD::F {
             ggggggggggggggggggggggggg: true,
             ..
-        }
-    );
+        });
 
     if something_we_care_about {
         println!("Yup it happened");

@@ -11,6 +11,13 @@ pub enum Severity {
         GGGGGGGGGGG
     )]
     AttrsWillWrap,
-    #[something_else(hhhhhhhhhhhhhhhh, iiiiiiiiiiiiiiii, jjjjjjjjjjjjjjj, kkkkkkkkkkkkk, llllllllllll, mmmmmmmmmmmmmm)]
+    #[something_else(
+        hhhhhhhhhhhhhhhh,
+        iiiiiiiiiiiiiiii,
+        jjjjjjjjjjjjjjj,
+        kkkkkkkkkkkkk,
+        llllllllllll,
+        mmmmmmmmmmmmmm
+    )]
     AttrsWontWrap,
 }

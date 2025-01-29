@@ -79,13 +79,10 @@ fn function_calls() {
         |item| item.span.lo(),
         |item| item.span.hi(),
         |item| {
-            item.rewrite(
-                context,
-                Shape {
-                    width: remaining_width,
-                    ..nested_shape
-                },
-            )
+            item.rewrite(context, Shape {
+                width: remaining_width,
+                ..nested_shape
+            })
         },
         span.lo(),
         span.hi(),
@@ -98,13 +95,10 @@ fn function_calls() {
         |item| item.span.lo(),
         |item| item.span.hi(),
         |item| {
-            item.rewrite(
-                context,
-                Shape {
-                    width: remaining_width,
-                    ..nested_shape
-                },
-            )
+            item.rewrite(context, Shape {
+                width: remaining_width,
+                ..nested_shape
+            })
         },
         span.lo(),
         span.hi(),
@@ -168,15 +162,10 @@ fn combine_block() {
         y: value2,
     },));
 
-    foo((
-        1,
-        2,
-        3,
-        Bar {
-            x: value,
-            y: value2,
-        },
-    ));
+    foo((1, 2, 3, Bar {
+        x: value,
+        y: value2,
+    }));
 
     foo((1, 2, 3, |x| {
         let y = x + 1;

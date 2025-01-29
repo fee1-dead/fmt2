@@ -3,11 +3,7 @@ fn main() {
         .chars()
         .filter(|c| if *c == 'A' { true } else { false })
         .map(|c| -> char {
-            if c == 'A' {
-                '0'
-            } else {
-                '1'
-            }
+            if c == 'A' { '0' } else { '1' }
         })
         .collect();
 

@@ -1,5 +1,3 @@
-// rustfmt-style_edition: 2015
-
 // ascii-betically sorted
 pub use print๙msg;
 pub use print0msg;

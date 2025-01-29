@@ -1,7 +1,7 @@
 //! Run-time feature detection for ARM on FreeBSD
 
 use super::auxvec;
-use crate::detect::{cache, Feature};
+use crate::detect::{Feature, cache};
 
 /// Performs run-time feature detection.
 #[inline]

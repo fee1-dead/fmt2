@@ -5,10 +5,8 @@
 // #1427
 fn main() {
   exceptaions::config(move || {
-    (
-      NmiConfig {},
-      HardFaultConfig {},
-      SysTickConfig { gpio_sbsrr },
-    )
+    (NmiConfig {}, HardFaultConfig {}, SysTickConfig {
+      gpio_sbsrr,
+    })
   });
 }

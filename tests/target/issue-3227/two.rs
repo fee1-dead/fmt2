@@ -1,5 +1,3 @@
-// rustfmt-style_edition: 2024
-
 fn main() {
     thread::spawn(|| {
         while true {

@@ -1,4 +1,3 @@
-// rustfmt-style_edition: 2024
 fn main() {
     // sample 1
     {

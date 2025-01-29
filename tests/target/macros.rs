@@ -274,18 +274,13 @@ macro_rules! try_opt {
 // #2214
 // macro call whose argument is an array with trailing comma.
 fn issue2214() {
-    make_test!(
-        str_searcher_ascii_haystack,
-        "bb",
-        "abbcbbd",
-        [
-            Reject(0, 1),
-            Match(1, 3),
-            Reject(3, 4),
-            Match(4, 6),
-            Reject(6, 7),
-        ]
-    );
+    make_test!(str_searcher_ascii_haystack, "bb", "abbcbbd", [
+        Reject(0, 1),
+        Match(1, 3),
+        Reject(3, 4),
+        Match(4, 6),
+        Reject(6, 7),
+    ]);
 }
 
 fn special_case_macros() {

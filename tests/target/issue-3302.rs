@@ -1,5 +1,3 @@
-// rustfmt-style_edition: 2024
-
 macro_rules! moo1 {
     () => {
         bar! {

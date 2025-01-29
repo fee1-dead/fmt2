@@ -1,4 +1,3 @@
-// rustfmt-style_edition: 2024
 pub enum TestEnum {
     a,
     b,

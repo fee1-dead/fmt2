@@ -3,7 +3,6 @@ use tracing::debug;
 
 use crate::comment::{CodeCharKind, CommentCodeSlices, is_last_comment_block, rewrite_comment};
 use crate::config::FileName;
-use crate::config::StyleEdition;
 use crate::config::file_lines::FileLines;
 use crate::coverage::transform_missing_snippet;
 use crate::shape::{Indent, Shape};
@@ -247,9 +246,7 @@ impl<'a> FmtVisitor<'a> {
             let indent_str = self.block_indent.to_string(self.config);
             self.push_str(&indent_str);
             self.block_indent
-        } else if self.config.style_edition() >= StyleEdition::Edition2024
-            && !snippet.starts_with('\n')
-        {
+        } else if !snippet.starts_with('\n') {
             // The comment appears on the same line as the previous formatted code.
             // Assuming that comment is logically associated with that code, we want to keep it on
             // the same level and avoid mixing it with possible other comment.

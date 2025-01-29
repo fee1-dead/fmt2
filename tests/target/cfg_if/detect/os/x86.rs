@@ -7,7 +7,7 @@ use crate::arch::x86_64::*;
 
 use crate::mem;
 
-use crate::detect::{bit, cache, Feature};
+use crate::detect::{Feature, bit, cache};
 
 /// Performs run-time feature detection.
 #[inline]

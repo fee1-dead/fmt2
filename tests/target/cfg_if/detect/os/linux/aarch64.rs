@@ -1,7 +1,7 @@
 //! Run-time feature detection for Aarch64 on Linux.
 
 use super::{auxvec, cpuinfo};
-use crate::detect::{bit, cache, Feature};
+use crate::detect::{Feature, bit, cache};
 
 /// Performs run-time feature detection.
 #[inline]

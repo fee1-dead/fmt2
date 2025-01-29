@@ -14,14 +14,11 @@ fn test(x: X) {
                     let h = {
                         let i = {
                             let j = {
-                                matches!(
-                                    x,
-                                    X {
-                                        a: 1_000,
-                                        b: 1_000,
-                                        ..
-                                    }
-                                )
+                                matches!(x, X {
+                                    a: 1_000,
+                                    b: 1_000,
+                                    ..
+                                })
                             };
                             j
                         };

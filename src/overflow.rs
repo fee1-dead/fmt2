@@ -9,8 +9,7 @@ use rustc_span::Span;
 use tracing::debug;
 
 use crate::closures;
-use crate::config::StyleEdition;
-use crate::config::{Config, lists::*};
+use crate::config::lists::*;
 use crate::expr::{
     can_be_overflowed_expr, is_every_expr_simple, is_method_call, is_nested_call, is_simple_expr,
     rewrite_cond,
@@ -197,18 +196,14 @@ impl<'a> OverflowableItem<'a> {
         }
     }
 
-    fn special_cases(&self, config: &Config) -> impl Iterator<Item = &(&'static str, usize)> {
+    fn special_cases(&self) -> impl Iterator<Item = &(&'static str, usize)> {
         let base_cases = match self {
             OverflowableItem::MacroArg(..) => SPECIAL_CASE_MACROS,
             OverflowableItem::MetaItemInner(..) => SPECIAL_CASE_ATTR,
             _ => &[],
         };
         let additional_cases = match self {
-            OverflowableItem::MacroArg(..)
-                if config.style_edition() >= StyleEdition::Edition2024 =>
-            {
-                SPECIAL_CASE_MACROS_V2
-            }
+            OverflowableItem::MacroArg(..) => SPECIAL_CASE_MACROS_V2,
             _ => &[],
         };
         base_cases.iter().chain(additional_cases)
@@ -499,9 +494,7 @@ impl<'a> Context<'a> {
                     self.context.force_one_line_chain.replace(true);
                 }
                 Some(OverflowableItem::MacroArg(MacroArg::Expr(expr)))
-                    if !combine_arg_with_callee
-                        && is_method_call(expr)
-                        && self.context.config.style_edition() >= StyleEdition::Edition2024 =>
+                    if !combine_arg_with_callee && is_method_call(expr) =>
                 {
                     self.context.force_one_line_chain.replace(true);
                 }
@@ -584,7 +577,7 @@ impl<'a> Context<'a> {
 
                     if tactic == DefinitiveListTactic::Vertical {
                         if let Some((all_simple, num_args_before)) =
-                            maybe_get_args_offset(self.ident, &self.items, &self.context.config)
+                            maybe_get_args_offset(self.ident, &self.items)
                         {
                             let one_line = all_simple
                                 && definitive_tactic(
@@ -696,16 +689,8 @@ impl<'a> Context<'a> {
         );
         result.push_str(self.ident);
         result.push_str(prefix);
-        let force_single_line = if self.context.config.style_edition() >= StyleEdition::Edition2024
-        {
-            !self.context.use_block_indent() || (is_extendable && extend_width <= shape.width)
-        } else {
-            // 2 = `()`
-            let fits_one_line = items_str.len() + 2 <= shape.width;
-            !self.context.use_block_indent()
-                || (self.context.inside_macro() && !items_str.contains('\n') && fits_one_line)
-                || (is_extendable && extend_width <= shape.width)
-        };
+        let force_single_line =
+            !self.context.use_block_indent() || (is_extendable && extend_width <= shape.width);
         if force_single_line {
             result.push_str(items_str);
         } else {
@@ -805,11 +790,10 @@ fn no_long_items(list: &[ListItem], short_array_element_width_threshold: usize) 
 pub(crate) fn maybe_get_args_offset(
     callee_str: &str,
     args: &[OverflowableItem<'_>],
-    config: &Config,
 ) -> Option<(bool, usize)> {
     if let Some(&(_, num_args_before)) = args
         .get(0)?
-        .special_cases(config)
+        .special_cases()
         .find(|&&(s, _)| s == callee_str)
     {
         let all_simple = args.len() > num_args_before

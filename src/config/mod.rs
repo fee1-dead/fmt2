@@ -24,7 +24,6 @@ pub(crate) mod file_lines;
 #[allow(unreachable_pub)]
 pub(crate) mod lists;
 pub(crate) mod macro_names;
-pub(crate) mod style_edition;
 
 // This macro defines configuration options used in rustfmt. Each option
 // is defined as follows:
@@ -149,8 +148,9 @@ create_config! {
     blank_lines_lower_bound: BlankLinesLowerBound, false,
         "Minimum number of blank lines which must be put between items";
     edition: EditionConfig, true, "The edition of the parser (RFC 2052)";
-    style_edition: StyleEditionConfig, true, "The edition of the Style Guide (RFC 3338)";
-    version: VersionConfig, false, "Version of formatting rules";
+    // FIXME(new): accept
+//    style_edition: StyleEditionConfig, true, "The edition of the Style Guide (RFC 3338)";
+//    version: VersionConfig, false, "Version of formatting rules";
     inline_attribute_width: InlineAttributeWidth, false,
         "Write an item and its attribute on the same line \
         if their combined width is below a threshold";
@@ -199,6 +199,26 @@ create_config! {
          files that would be formatted when used with `--check` mode. ";
 }
 
+/// Defines the default value for the given config type
+pub trait ConfigDefault {
+    type ConfigType;
+    fn config_default() -> Self::ConfigType;
+}
+
+/// macro to help implement `StyleEditionDefault` for config options
+#[macro_export]
+macro_rules! config_default {
+    ($ty:ident, $config_ty:ty, _ => $default:expr) => {
+        impl $crate::config::ConfigDefault for $ty {
+            type ConfigType = $config_ty;
+
+            fn config_default() -> Self::ConfigType {
+                $default
+            }
+        }
+    };
+}
+
 #[derive(Error, Debug)]
 #[error("Could not output config: {0}")]
 pub struct ToTomlError(toml::ser::Error);
@@ -218,47 +238,12 @@ impl PartialConfig {
         ::toml::to_string(&cloned).map_err(ToTomlError)
     }
 
-    pub(super) fn to_parsed_config(
-        self,
-        style_edition_override: Option<StyleEdition>,
-        edition_override: Option<Edition>,
-        version_override: Option<Version>,
-        dir: &Path,
-    ) -> Config {
-        Config::default_for_possible_style_edition(
-            style_edition_override.or(self.style_edition),
-            edition_override.or(self.edition),
-            version_override.or(self.version),
-        )
-        .fill_from_parsed_config(self, dir)
+    pub(super) fn to_parsed_config(self, dir: &Path) -> Config {
+        Config::default().fill_from_parsed_config(self, dir)
     }
 }
 
 impl Config {
-    pub fn default_for_possible_style_edition(
-        style_edition: Option<StyleEdition>,
-        edition: Option<Edition>,
-        version: Option<Version>,
-    ) -> Config {
-        // Ensures the configuration defaults associated with Style Editions
-        // follow the precedence set in
-        // https://rust-lang.github.io/rfcs/3338-style-evolution.html
-        // 'version' is a legacy alias for 'style_edition' that we'll support
-        // for some period of time
-        // FIXME(calebcartwright) - remove 'version' at some point
-        match (style_edition, version, edition) {
-            (Some(se), _, _) => Self::default_with_style_edition(se),
-            (None, Some(Version::Two), _) => {
-                Self::default_with_style_edition(StyleEdition::Edition2024)
-            }
-            (None, Some(Version::One), _) => {
-                Self::default_with_style_edition(StyleEdition::Edition2015)
-            }
-            (None, None, Some(e)) => Self::default_with_style_edition(e.into()),
-            (None, None, None) => Config::default(),
-        }
-    }
-
     pub(crate) fn version_meets_requirement(&self) -> bool {
         if self.was_set().required_version() {
             let version = env!("CARGO_PKG_VERSION");
@@ -282,17 +267,11 @@ impl Config {
     ///
     /// Returns a `Config` if the config could be read and parsed from
     /// the file, otherwise errors.
-    pub(super) fn from_toml_path(
-        file_path: &Path,
-        edition: Option<Edition>,
-        style_edition: Option<StyleEdition>,
-        version: Option<Version>,
-    ) -> Result<Config, Error> {
+    pub(super) fn from_toml_path(file_path: &Path) -> Result<Config, Error> {
         let mut file = File::open(&file_path)?;
         let mut toml = String::new();
         file.read_to_string(&mut toml)?;
-        Config::from_toml_for_style_edition(&toml, file_path, edition, style_edition, version)
-            .map_err(|err| Error::new(ErrorKind::InvalidData, err))
+        Config::from_toml(&toml, file_path).map_err(|err| Error::new(ErrorKind::InvalidData, err))
     }
 
     /// Resolves the config for input in `dir`.
@@ -304,12 +283,7 @@ impl Config {
     ///
     /// Returns the `Config` to use, and the path of the project file if there was
     /// one.
-    pub(super) fn from_resolved_toml_path(
-        dir: &Path,
-        edition: Option<Edition>,
-        style_edition: Option<StyleEdition>,
-        version: Option<Version>,
-    ) -> Result<(Config, Option<PathBuf>), Error> {
+    pub(super) fn from_resolved_toml_path(dir: &Path) -> Result<(Config, Option<PathBuf>), Error> {
         /// Try to find a project file in the given directory and its parents.
         /// Returns the path of the nearest project file if one exists,
         /// or `None` if no project file was found.
@@ -354,27 +328,12 @@ impl Config {
         }
 
         match resolve_project_file(dir)? {
-            None => Ok((
-                Config::default_for_possible_style_edition(style_edition, edition, version),
-                None,
-            )),
-            Some(path) => Config::from_toml_path(&path, edition, style_edition, version)
-                .map(|config| (config, Some(path))),
+            None => Ok((Config::default(), None)),
+            Some(path) => Config::from_toml_path(&path).map(|config| (config, Some(path))),
         }
     }
 
-    #[allow(dead_code)]
-    pub(super) fn from_toml(toml: &str, file_path: &Path) -> Result<Config, String> {
-        Self::from_toml_for_style_edition(toml, file_path, None, None, None)
-    }
-
-    pub(crate) fn from_toml_for_style_edition(
-        toml: &str,
-        file_path: &Path,
-        edition: Option<Edition>,
-        style_edition: Option<StyleEdition>,
-        version: Option<Version>,
-    ) -> Result<Config, String> {
+    pub(crate) fn from_toml(toml: &str, file_path: &Path) -> Result<Config, String> {
         let parsed: ::toml::Value = toml
             .parse()
             .map_err(|e| format!("Could not parse TOML: {}", e))?;
@@ -398,7 +357,7 @@ impl Config {
                     format!("failed to get parent directory for {}", file_path.display())
                 })?;
 
-                Ok(parsed_config.to_parsed_config(style_edition, edition, version, dir))
+                Ok(parsed_config.to_parsed_config(dir))
             }
             Err(e) => {
                 let err_msg = format!(
@@ -418,26 +377,17 @@ pub fn load_config<O: CliOptions>(
     file_path: Option<&Path>,
     options: Option<O>,
 ) -> Result<(Config, Option<PathBuf>), Error> {
-    let (over_ride, edition, style_edition, version) = match options {
-        Some(ref opts) => (
-            config_path(opts)?,
-            opts.edition(),
-            opts.style_edition(),
-            opts.version(),
-        ),
-        None => (None, None, None, None),
+    let over_ride = match options {
+        Some(ref opts) => config_path(opts)?,
+        None => None,
     };
 
     let result = if let Some(over_ride) = over_ride {
-        Config::from_toml_path(over_ride.as_ref(), edition, style_edition, version)
-            .map(|p| (p, Some(over_ride.to_owned())))
+        Config::from_toml_path(over_ride.as_ref()).map(|p| (p, Some(over_ride.to_owned())))
     } else if let Some(file_path) = file_path {
-        Config::from_resolved_toml_path(file_path, edition, style_edition, version)
+        Config::from_resolved_toml_path(file_path)
     } else {
-        Ok((
-            Config::default_for_possible_style_edition(style_edition, edition, version),
-            None,
-        ))
+        Ok((Config::default(), None))
     };
 
     result.map(|(mut c, p)| {
@@ -516,7 +466,7 @@ mod test {
     #[allow(dead_code)]
     mod mock {
         use super::super::*;
-        use crate::config_option_with_style_edition_default;
+        use crate::config_option_with_default;
         use rustfmt_config_proc_macro::config_type;
 
         #[config_type]
@@ -527,7 +477,7 @@ mod test {
             V3,
         }
 
-        config_option_with_style_edition_default!(
+        config_option_with_default!(
             StableOption, bool, _ => false;
             UnstableOption, bool, _ => false;
             PartiallyUnstable, PartiallyUnstableOption, _ => PartiallyUnstableOption::V1;
@@ -588,8 +538,6 @@ mod test {
             unstable_option: UnstableOption, false, "An unstable option";
             partially_unstable_option: PartiallyUnstable, true, "A partially unstable option";
             edition: EditionConfig, true, "blah";
-            style_edition: StyleEditionConfig, true, "blah";
-            version: VersionConfig, false, "blah blah"
         }
 
         #[cfg(test)]
@@ -758,7 +706,7 @@ binop_separator = "Front"
 remove_nested_parens = true
 combine_control_expr = true
 short_array_element_width_threshold = 10
-overflow_delimited_expr = false
+overflow_delimited_expr = true
 struct_field_align_threshold = 0
 enum_discrim_align_threshold = 0
 match_arm_blocks = true
@@ -773,8 +721,6 @@ match_block_trailing_comma = false
 blank_lines_upper_bound = 1
 blank_lines_lower_bound = 0
 edition = "2015"
-style_edition = "2015"
-version = "One"
 inline_attribute_width = 0
 format_generated_files = true
 generated_marker_line_search_limit = 5
@@ -799,114 +745,6 @@ make_backup = false
         );
         let toml = Config::default().all_options().to_toml().unwrap();
         assert_eq!(&toml, &default_config);
-    }
-
-    #[test]
-    fn test_dump_style_edition_2024_config() {
-        let edition_2024_config = format!(
-            r#"max_width = 100
-hard_tabs = false
-tab_spaces = 4
-newline_style = "Auto"
-indent_style = "Block"
-use_small_heuristics = "Default"
-fn_call_width = 60
-attr_fn_like_width = 70
-struct_lit_width = 18
-struct_variant_width = 35
-array_width = 60
-chain_width = 60
-single_line_if_else_max_width = 50
-single_line_let_else_max_width = 50
-wrap_comments = false
-format_code_in_doc_comments = false
-doc_comment_code_block_width = 100
-comment_width = 80
-normalize_comments = false
-normalize_doc_attributes = false
-format_strings = false
-format_macro_matchers = false
-format_macro_bodies = true
-skip_macro_invocations = []
-hex_literal_case = "Preserve"
-empty_item_single_line = true
-struct_lit_single_line = true
-fn_single_line = false
-where_single_line = false
-imports_indent = "Block"
-imports_layout = "Mixed"
-imports_granularity = "Preserve"
-group_imports = "Preserve"
-reorder_imports = true
-reorder_modules = true
-reorder_impl_items = false
-type_punctuation_density = "Wide"
-space_before_colon = false
-space_after_colon = true
-spaces_around_ranges = false
-binop_separator = "Front"
-remove_nested_parens = true
-combine_control_expr = true
-short_array_element_width_threshold = 10
-overflow_delimited_expr = true
-struct_field_align_threshold = 0
-enum_discrim_align_threshold = 0
-match_arm_blocks = true
-match_arm_leading_pipes = "Never"
-force_multiline_blocks = false
-fn_params_layout = "Tall"
-brace_style = "SameLineWhere"
-control_brace_style = "AlwaysSameLine"
-trailing_semicolon = true
-trailing_comma = "Vertical"
-match_block_trailing_comma = false
-blank_lines_upper_bound = 1
-blank_lines_lower_bound = 0
-edition = "2015"
-style_edition = "2024"
-version = "Two"
-inline_attribute_width = 0
-format_generated_files = true
-generated_marker_line_search_limit = 5
-merge_derives = true
-use_try_shorthand = false
-use_field_init_shorthand = false
-force_explicit_abi = true
-condense_wildcard_suffixes = false
-color = "Auto"
-required_version = "{}"
-unstable_features = false
-disable_all_formatting = false
-skip_children = false
-show_parse_errors = true
-error_on_line_overflow = false
-error_on_unformatted = false
-ignore = []
-emit_mode = "Files"
-make_backup = false
-"#,
-            env!("CARGO_PKG_VERSION")
-        );
-        let toml = Config::default_with_style_edition(StyleEdition::Edition2024)
-            .all_options()
-            .to_toml()
-            .unwrap();
-        assert_eq!(&toml, &edition_2024_config);
-    }
-
-    #[test]
-    fn test_editions_2015_2018_2021_identical() {
-        let get_edition_toml = |style_edition: StyleEdition| {
-            Config::default_with_style_edition(style_edition)
-                .all_options()
-                .to_toml()
-                .unwrap()
-        };
-        let edition2015 = get_edition_toml(StyleEdition::Edition2015);
-        let edition2018 = get_edition_toml(StyleEdition::Edition2018);
-        let edition2021 = get_edition_toml(StyleEdition::Edition2021);
-        assert_eq!(edition2015, edition2018);
-        assert_eq!(edition2018, edition2021);
     }
 
     #[stable_only_test]

@@ -1,18 +1,22 @@
-// rustfmt-style_edition: 2015
-
 fn combine_blocklike() {
-    do_thing(|param| {
-        action();
-        foo(param)
-    });
-
-    do_thing(x, |param| {
-        action();
-        foo(param)
-    });
+    do_thing(
+        |param| {
+            action();
+            foo(param)
+        },
+    );
 
     do_thing(
         x,
+        |param| {
+            action();
+            foo(param)
+        },
+    );
+
+    do_thing(
+        x,
+
         // I'll be discussing the `action` with your para(m)legal counsel
         |param| {
             action();
@@ -20,10 +24,12 @@ fn combine_blocklike() {
         },
     );
 
-    do_thing(Bar {
-        x: value,
-        y: value2,
-    });
+    do_thing(
+        Bar {
+            x: value,
+            y: value2,
+        },
+    );
 
     do_thing(
         x,
@@ -35,6 +41,7 @@ fn combine_blocklike() {
 
     do_thing(
         x,
+
         // Let me tell you about that one time at the `Bar`
         Bar {
             x: value,
@@ -42,12 +49,14 @@ fn combine_blocklike() {
         },
     );
 
-    do_thing(&[
-        value_with_longer_name,
-        value2_with_longer_name,
-        value3_with_longer_name,
-        value4_with_longer_name,
-    ]);
+    do_thing(
+        &[
+            value_with_longer_name,
+            value2_with_longer_name,
+            value3_with_longer_name,
+            value4_with_longer_name,
+        ],
+    );
 
     do_thing(
         x,
@@ -61,6 +70,7 @@ fn combine_blocklike() {
 
     do_thing(
         x,
+
         // Just admit it; my list is longer than can be folded on to one line
         &[
             value_with_longer_name,
@@ -70,12 +80,14 @@ fn combine_blocklike() {
         ],
     );
 
-    do_thing(vec![
-        value_with_longer_name,
-        value2_with_longer_name,
-        value3_with_longer_name,
-        value4_with_longer_name,
-    ]);
+    do_thing(
+        vec![
+            value_with_longer_name,
+            value2_with_longer_name,
+            value3_with_longer_name,
+            value4_with_longer_name,
+        ],
+    );
 
     do_thing(
         x,
@@ -89,6 +101,7 @@ fn combine_blocklike() {
 
     do_thing(
         x,
+
         // Just admit it; my list is longer than can be folded on to one line
         vec![
             value_with_longer_name,
@@ -100,10 +113,15 @@ fn combine_blocklike() {
 
     do_thing(
         x,
-        (1, 2, 3, |param| {
-            action();
-            foo(param)
-        }),
+        (
+            1,
+            2,
+            3,
+            |param| {
+                action();
+                foo(param)
+            },
+        ),
     );
 }
 

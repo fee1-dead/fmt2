@@ -412,15 +412,11 @@ fn issue1460() {
 }
 
 fn issue525() {
-    foobar(
-        f,
-        "{}",
-        match *self {
-            TaskState::Started => "started",
-            TaskState::Success => "success",
-            TaskState::Failed => "failed",
-        },
-    );
+    foobar(f, "{}", match *self {
+        TaskState::Started => "started",
+        TaskState::Success => "success",
+        TaskState::Failed => "failed",
+    });
 }
 
 // #1838, #1839

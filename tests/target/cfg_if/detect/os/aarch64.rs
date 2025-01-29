@@ -16,7 +16,7 @@
 //! - [Zircon implementation](https://fuchsia.googlesource.com/zircon/+/master/kernel/arch/arm64/feature.cpp)
 //! - [Linux documentation](https://www.kernel.org/doc/Documentation/arm64/cpu-feature-registers.txt)
 
-use crate::detect::{cache, Feature};
+use crate::detect::{Feature, cache};
 
 /// Try to read the features from the system registers.
 ///

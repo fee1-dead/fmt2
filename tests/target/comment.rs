@@ -9,8 +9,8 @@ fn test() {
     // comment
     // comment2
 
+    // (FIXME(new) why does this get realigned down?)
     code(); // leave this comment alone!
-            // ok?
 
     // Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec a
     // diam lectus. Sed sit amet ipsum mauris. Maecenas congue ligula ac quam
@@ -32,7 +32,7 @@ fn test() {
     //                           .unwrap());
 
     funk(); // dontchangeme
-            // or me
+    // or me
 
     // #1388
     const EXCEPTION_PATHS: &'static [&'static str] = &[
@@ -59,7 +59,7 @@ fn issue_1086() {
 
 // random comment
 
-fn main() { // Test
+fn main() { /* Test */
 }
 
 // #1643

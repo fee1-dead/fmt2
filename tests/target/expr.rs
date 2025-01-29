@@ -30,11 +30,7 @@ fn foo() -> bool {
     }
 
     {
-        {
-            {
-                {}
-            }
-        }
+        { { {} } }
     }
 
     if 1 + 2 > 0 {
@@ -579,7 +575,9 @@ fn issue3457() {
                                                                                         {
                                                                                             {
                                                                                                 {
-                                                                                                    println!("Test");
+                                                                                                    println!(
+                                                                                                        "Test"
+                                                                                                    );
                                                                                                 }
                                                                                             }
                                                                                         }

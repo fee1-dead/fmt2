@@ -1,8 +1,13 @@
 // rustfmt-imports_indent: Block
 // rustfmt-imports_layout: HorizontalVertical
 
-use comment::{contains_comment, recover_comment_removed, rewrite_comment, FindUncommented};
+use comment::{FindUncommented, contains_comment, recover_comment_removed, rewrite_comment};
 use lists::{
+    DefinitiveListTactic,
+    ListFormatting,
+    ListItem,
+    ListTactic,
+    SeparatorTactic,
     definitive_tactic,
     itemize_list,
     shape_for_tactic,
@@ -10,9 +15,4 @@ use lists::{
     struct_lit_shape,
     struct_lit_tactic,
     write_list,
-    DefinitiveListTactic,
-    ListFormatting,
-    ListItem,
-    ListTactic,
-    SeparatorTactic,
 };

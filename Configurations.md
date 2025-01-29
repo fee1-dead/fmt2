@@ -2692,17 +2692,6 @@ By default this option is set as a percentage of [`max_width`](#max_width) provi
 
 See also [`max_width`](#max_width) and [`use_small_heuristics`](#use_small_heuristics)
 
-## `style_edition`
-
-Controls the edition of the [Rust Style Guide] to use for formatting ([RFC 3338])
-
-- **Default value**: `"2015"`
-- **Possible values**: `"2015"`, `"2018"`, `"2021"`, `"2024"` (unstable variant)
-- **Stable**: No
-
-[Rust Style Guide]: https://doc.rust-lang.org/nightly/style-guide/
-[RFC 3338]: https://rust-lang.github.io/rfcs/3338-style-evolution.html
-
 ## `tab_spaces`
 
 Number of spaces per tab
@@ -3058,22 +3047,6 @@ fn main() {
 fn main() {
     let lorem = ipsum.map(|dolor| dolor.sit())?;
 }
-```
-
-## `version`
-
-This option is deprecated and has been replaced by [`style_edition`](#style_edition).
-`version = "One"` is equivalent to `style_edition = "(2015|2018|2021)"` and
-`version = "Two"` is equivalent to `style_edition = "2024"`
-
-- **Default value**: `One`
-- **Possible values**: `One`, `Two`
-- **Stable**: No (tracking issue: [#3383](https://github.com/rust-lang/rustfmt/issues/3383))
-
-### Example
-
-```toml
-version = "Two"
 ```
 
 ## `where_single_line`

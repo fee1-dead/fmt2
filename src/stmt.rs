@@ -2,7 +2,6 @@ use rustc_ast::ast;
 use rustc_span::Span;
 
 use crate::comment::recover_comment_removed;
-use crate::config::StyleEdition;
 use crate::expr::{ExprType, format_expr, is_simple_block};
 use crate::rewrite::{Rewrite, RewriteContext, RewriteError, RewriteResult};
 use crate::shape::Shape;
@@ -98,12 +97,11 @@ impl<'a> Rewrite for Stmt<'a> {
         context: &RewriteContext<'_>,
         shape: Shape,
     ) -> crate::rewrite::RewriteResult {
-        let expr_type =
-            if context.config.style_edition() >= StyleEdition::Edition2024 && self.is_last_expr() {
-                ExprType::SubExpression
-            } else {
-                ExprType::Statement
-            };
+        let expr_type = if self.is_last_expr() {
+            ExprType::SubExpression
+        } else {
+            ExprType::Statement
+        };
         format_stmt(
             context,
             shape,

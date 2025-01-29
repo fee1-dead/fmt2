@@ -420,7 +420,6 @@ pub trait CliOptions {
     /// (i.e. the callers are expected to handle such cases).
     fn config_path(&self) -> Option<&Path>;
     fn edition(&self) -> Option<Edition>;
-    fn style_edition(&self) -> Option<StyleEdition>;
     fn version(&self) -> Option<Version>;
 }
 
@@ -462,17 +461,6 @@ impl From<Edition> for rustc_span::edition::Edition {
     }
 }
 
-impl From<Edition> for StyleEdition {
-    fn from(edition: Edition) -> Self {
-        match edition {
-            Edition::Edition2015 => StyleEdition::Edition2015,
-            Edition::Edition2018 => StyleEdition::Edition2018,
-            Edition::Edition2021 => StyleEdition::Edition2021,
-            Edition::Edition2024 => StyleEdition::Edition2024,
-        }
-    }
-}
-
 impl PartialOrd for Edition {
     fn partial_cmp(&self, other: &Edition) -> Option<std::cmp::Ordering> {
         rustc_span::edition::Edition::partial_cmp(&(*self).into(), &(*other).into())
@@ -490,88 +478,21 @@ pub enum MatchArmLeadingPipe {
     Preserve,
 }
 
-/// Defines the default values for each config according to the edition of the
-/// [Style Guide] as per [RFC 3338]. Rustfmt output may differ between Style editions.
-///
-/// [Style Guide]: https://doc.rust-lang.org/nightly/style-guide/
-/// [RFC 3338]: https://rust-lang.github.io/rfcs/3338-style-evolution.html
-#[config_type]
-pub enum StyleEdition {
-    #[value = "2015"]
-    #[doc_hint = "2015"]
-    /// [Edition 2015]()
-    Edition2015,
-    #[value = "2018"]
-    #[doc_hint = "2018"]
-    /// [Edition 2018]()
-    Edition2018,
-    #[value = "2021"]
-    #[doc_hint = "2021"]
-    /// [Edition 2021]()
-    Edition2021,
-    #[value = "2024"]
-    #[doc_hint = "2024"]
-    /// [Edition 2024]().
-    Edition2024,
-    #[value = "2027"]
-    #[doc_hint = "2027"]
-    #[unstable_variant]
-    /// [Edition 2027]().
-    Edition2027,
-}
-
-impl From<StyleEdition> for rustc_span::edition::Edition {
-    fn from(edition: StyleEdition) -> Self {
-        match edition {
-            StyleEdition::Edition2015 => Self::Edition2015,
-            StyleEdition::Edition2018 => Self::Edition2018,
-            StyleEdition::Edition2021 => Self::Edition2021,
-            StyleEdition::Edition2024 => Self::Edition2024,
-            // TODO: should update to Edition2027 when it becomes available
-            StyleEdition::Edition2027 => Self::Edition2024,
-        }
-    }
-}
-
-impl PartialOrd for StyleEdition {
-    fn partial_cmp(&self, other: &StyleEdition) -> Option<std::cmp::Ordering> {
-        // FIXME(ytmimi): Update `StyleEdition::Edition2027` logic when
-        // `rustc_span::edition::Edition::Edition2027` becomes available in the compiler
-        match (self, other) {
-            (Self::Edition2027, Self::Edition2027) => Some(std::cmp::Ordering::Equal),
-            (_, Self::Edition2027) => Some(std::cmp::Ordering::Less),
-            (Self::Edition2027, _) => Some(std::cmp::Ordering::Greater),
-            (Self::Edition2015 | Self::Edition2018 | Self::Edition2021 | Self::Edition2024, _) => {
-                rustc_span::edition::Edition::partial_cmp(&(*self).into(), &(*other).into())
-            }
-        }
-    }
-}
-
 /// Defines unit structs to implement `StyleEditionDefault` for.
 #[macro_export]
-macro_rules! config_option_with_style_edition_default {
+macro_rules! config_option_with_default {
     ($name:ident, $config_ty:ty, _ => $default:expr) => {
         #[allow(unreachable_pub)]
         pub struct $name;
-        $crate::style_edition_default!($name, $config_ty, _ => $default);
-    };
-    ($name:ident, $config_ty:ty, Edition2024 => $default_2024:expr, _ => $default_2015:expr) => {
-        pub struct $name;
-        $crate::style_edition_default!(
-            $name,
-            $config_ty,
-            Edition2024 => $default_2024,
-            _ => $default_2015
-        );
+        $crate::config_default!($name, $config_ty, _ => $default);
     };
     (
-        $($name:ident, $config_ty:ty, $(Edition2024 => $default_2024:expr,)? _ => $default:expr);*
+        $($name:ident, $config_ty:ty, _ => $default:expr);*
         $(;)*
     ) => {
         $(
-            config_option_with_style_edition_default!(
-                $name, $config_ty, $(Edition2024 => $default_2024,)? _ => $default
+            config_option_with_default!(
+                $name, $config_ty, _ => $default
             );
         )*
     };
@@ -581,7 +502,7 @@ macro_rules! config_option_with_style_edition_default {
 // I chose to add a `Config` suffix in cases where a type for the config option was already
 // defined. For example, `NewlineStyle` and `NewlineStyleConfig`. There was some discussion
 // about using the `Config` suffix more consistently.
-config_option_with_style_edition_default!(
+config_option_with_default!(
     // Fundamental stuff
     MaxWidth, usize, _ => 100;
     HardTabs, bool, _ => false;
@@ -643,7 +564,7 @@ config_option_with_style_edition_default!(
     RemoveNestedParens, bool, _ => true;
     CombineControlExpr, bool, _ => true;
     ShortArrayElementWidthThreshold, usize, _ => 10;
-    OverflowDelimitedExpr, bool, Edition2024 => true, _ => false;
+    OverflowDelimitedExpr, bool, _ => true;
     StructFieldAlignThreshold, usize, _ => 0;
     EnumDiscrimAlignThreshold, usize, _ => 0;
     MatchArmBlocks, bool, _ => true;
@@ -659,9 +580,6 @@ config_option_with_style_edition_default!(
     BlankLinesUpperBound, usize, _ => 1;
     BlankLinesLowerBound, usize, _ => 0;
     EditionConfig, Edition, _ => Edition::Edition2015;
-    StyleEditionConfig, StyleEdition,
-        Edition2024 =>  StyleEdition::Edition2024, _ => StyleEdition::Edition2015;
-    VersionConfig, Version, Edition2024 => Version::Two, _ => Version::One;
     InlineAttributeWidth, usize, _ => 0;
     FormatGeneratedFiles, bool, _ => true;
     GeneratedMarkerLineSearchLimit, usize, _ => 5;
@@ -692,41 +610,3 @@ config_option_with_style_edition_default!(
     MakeBackup, bool, _ => false;
     PrintMisformattedFileNames, bool, _ => false;
 );
-
-#[test]
-fn style_edition_comparisons() {
-    // Style Edition 2015
-    assert!(StyleEdition::Edition2015 == StyleEdition::Edition2015);
-    assert!(StyleEdition::Edition2015 < StyleEdition::Edition2018);
-    assert!(StyleEdition::Edition2015 < StyleEdition::Edition2021);
-    assert!(StyleEdition::Edition2015 < StyleEdition::Edition2024);
-    assert!(StyleEdition::Edition2015 < StyleEdition::Edition2027);
-
-    // Style Edition 2018
-    assert!(StyleEdition::Edition2018 > StyleEdition::Edition2015);
-    assert!(StyleEdition::Edition2018 == StyleEdition::Edition2018);
-    assert!(StyleEdition::Edition2018 < StyleEdition::Edition2021);
-    assert!(StyleEdition::Edition2018 < StyleEdition::Edition2024);
-    assert!(StyleEdition::Edition2018 < StyleEdition::Edition2027);
-
-    // Style Edition 2021
-    assert!(StyleEdition::Edition2021 > StyleEdition::Edition2015);
-    assert!(StyleEdition::Edition2021 > StyleEdition::Edition2018);
-    assert!(StyleEdition::Edition2021 == StyleEdition::Edition2021);
-    assert!(StyleEdition::Edition2021 < StyleEdition::Edition2024);
-    assert!(StyleEdition::Edition2021 < StyleEdition::Edition2027);
-
-    // Style Edition 2024
-    assert!(StyleEdition::Edition2024 > StyleEdition::Edition2015);
-    assert!(StyleEdition::Edition2024 > StyleEdition::Edition2018);
-    assert!(StyleEdition::Edition2024 > StyleEdition::Edition2021);
-    assert!(StyleEdition::Edition2024 == StyleEdition::Edition2024);
-    assert!(StyleEdition::Edition2024 < StyleEdition::Edition2027);
-
-    // Style Edition 2024
-    assert!(StyleEdition::Edition2027 > StyleEdition::Edition2015);
-    assert!(StyleEdition::Edition2027 > StyleEdition::Edition2018);
-    assert!(StyleEdition::Edition2027 > StyleEdition::Edition2021);
-    assert!(StyleEdition::Edition2027 > StyleEdition::Edition2024);
-    assert!(StyleEdition::Edition2027 == StyleEdition::Edition2027);
-}

@@ -25,7 +25,6 @@ use tracing::debug;
 use crate::comment::{
     CharClasses, FindUncommented, FullCodeCharKind, LineClasses, contains_comment,
 };
-use crate::config::StyleEdition;
 use crate::config::lists::*;
 use crate::expr::{RhsAssignKind, rewrite_array, rewrite_assign_rhs};
 use crate::lists::{ListFormatting, itemize_list, write_list};
@@ -1284,10 +1283,8 @@ impl MacroBranch {
         let old_body = context.snippet(self.body).trim();
         let has_block_body = old_body.starts_with('{');
         let mut prefix_width = 5; // 5 = " => {"
-        if context.config.style_edition() >= StyleEdition::Edition2024 {
-            if has_block_body {
-                prefix_width = 6; // 6 = " => {{"
-            }
+        if has_block_body {
+            prefix_width = 6; // 6 = " => {{"
         }
         let mut result = format_macro_args(
             context,

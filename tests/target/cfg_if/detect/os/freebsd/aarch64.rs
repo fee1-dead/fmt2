@@ -1,7 +1,7 @@
 //! Run-time feature detection for Aarch64 on FreeBSD.
 
 use super::super::aarch64::detect_features;
-use crate::detect::{cache, Feature};
+use crate::detect::{Feature, cache};
 
 /// Performs run-time feature detection.
 #[inline]

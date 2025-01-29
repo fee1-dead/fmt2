@@ -92,9 +92,6 @@ impl CliOptions for NullOptions {
     fn edition(&self) -> Option<rustfmt_nightly::Edition> {
         unreachable!();
     }
-    fn style_edition(&self) -> Option<rustfmt_nightly::StyleEdition> {
-        unreachable!();
-    }
     fn version(&self) -> Option<Version> {
         unreachable!();
     }

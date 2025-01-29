@@ -15,7 +15,7 @@ use crate::comment::{
     recover_comment_removed, recover_missing_comment_in_span, rewrite_missing_comment,
 };
 use crate::config::lists::*;
-use crate::config::{BraceStyle, Config, IndentStyle, StyleEdition};
+use crate::config::{BraceStyle, Config, IndentStyle};
 use crate::expr::{
     RhsAssignKind, RhsTactics, is_empty_block, is_simple_block_stmt, rewrite_assign_rhs,
     rewrite_assign_rhs_with, rewrite_assign_rhs_with_comments, rewrite_else_kw_with_comments,
@@ -24,9 +24,7 @@ use crate::expr::{
 use crate::lists::{ListFormatting, Separator, definitive_tactic, itemize_list, write_list};
 use crate::macros::{MacroPosition, rewrite_macro};
 use crate::overflow;
-use crate::rewrite::{
-    ExceedsMaxWidthError, Rewrite, RewriteContext, RewriteError, RewriteErrorExt, RewriteResult,
-};
+use crate::rewrite::{Rewrite, RewriteContext, RewriteError, RewriteErrorExt, RewriteResult};
 use crate::shape::{Indent, Shape};
 use crate::source_map::{LineRangeUtils, SpanUtils};
 use crate::spanned::Spanned;
@@ -137,12 +135,7 @@ impl Rewrite for ast::Local {
                 let else_kw_span = init.span.between(block.span);
                 // Strip attributes and comments to check if newline is needed before the else
                 // keyword from the initializer part. (#5901)
-                let style_edition = context.config.style_edition();
-                let init_str = if style_edition >= StyleEdition::Edition2024 {
-                    &result[let_kw_offset..]
-                } else {
-                    result.as_str()
-                };
+                let init_str = &result[let_kw_offset..];
                 let force_newline_else = pat_str.contains('\n')
                     || !same_line_else_kw_and_brace(init_str, context, else_kw_span, nested_shape);
                 let else_kw = rewrite_else_kw_with_comments(
@@ -162,12 +155,7 @@ impl Rewrite for ast::Local {
                     std::cmp::min(shape.width, context.config.single_line_let_else_max_width());
 
                 // If available_space hits zero we know for sure this will be a multi-lined block
-                let style_edition = context.config.style_edition();
-                let assign_str_with_else_kw = if style_edition >= StyleEdition::Edition2024 {
-                    &result[let_kw_offset..]
-                } else {
-                    result.as_str()
-                };
+                let assign_str_with_else_kw = &result[let_kw_offset..];
                 let available_space = max_width.saturating_sub(assign_str_with_else_kw.len());
 
                 let allow_single_line = !force_newline_else
@@ -669,12 +657,7 @@ impl<'a> FmtVisitor<'a> {
 
         let context = self.get_context();
         let shape = self.shape();
-        let attrs_str = if context.config.style_edition() >= StyleEdition::Edition2024 {
-            field.attrs.rewrite(&context, shape)?
-        } else {
-            // StyleEdition::Edition20{15|18|21} formatting that was off by 1. See issue #5801
-            field.attrs.rewrite(&context, shape.sub_width_opt(1)?)?
-        };
+        let attrs_str = field.attrs.rewrite(&context, shape)?;
         // sub_width(1) to take the trailing comma into account
         let shape = shape.sub_width_opt(1)?;
 
@@ -960,16 +943,7 @@ fn format_impl_ref_and_type(
     result.push_str(format_defaultness(defaultness));
     result.push_str(format_safety(safety));
 
-    let shape = if context.config.style_edition() >= StyleEdition::Edition2024 {
-        Shape::indented(offset + last_line_width(&result), context.config)
-    } else {
-        generics_shape_from_config(
-            context.config,
-            Shape::indented(offset + last_line_width(&result), context.config),
-            0,
-            item.span,
-        )?
-    };
+    let shape = Shape::indented(offset + last_line_width(&result), context.config);
     let generics_str = rewrite_generics(context, "impl", generics, shape)?;
     result.push_str(&generics_str);
     result.push_str(format_constness_right(constness));
@@ -2177,9 +2151,7 @@ impl Rewrite for ast::FnRetTy {
             ast::FnRetTy::Default(_) => Ok(String::new()),
             ast::FnRetTy::Ty(ref ty) => {
                 let arrow_width = "-> ".len();
-                if context.config.style_edition() <= StyleEdition::Edition2021
-                    || context.config.indent_style() == IndentStyle::Visual
-                {
+                if context.config.indent_style() == IndentStyle::Visual {
                     let inner_width = shape
                         .width
                         .checked_sub(arrow_width)
@@ -2574,22 +2546,15 @@ fn rewrite_fn_base(
             .last()
             .map_or(false, |last_line| last_line.contains("//"));
 
-        if context.config.style_edition() >= StyleEdition::Edition2027 {
-            if closing_paren_overflow_max_width {
-                result.push(')');
-                result.push_str(&indent.to_string_with_newline(context.config));
-                no_params_and_over_max_width = true;
-            } else if params_last_line_contains_comment {
-                result.push_str(&indent.to_string_with_newline(context.config));
-                result.push(')');
-                no_params_and_over_max_width = true;
-            } else {
-                result.push(')');
-            }
+        if closing_paren_overflow_max_width {
+            result.push(')');
+            result.push_str(&indent.to_string_with_newline(context.config));
+            no_params_and_over_max_width = true;
+        } else if params_last_line_contains_comment {
+            result.push_str(&indent.to_string_with_newline(context.config));
+            result.push(')');
+            no_params_and_over_max_width = true;
         } else {
-            if closing_paren_overflow_max_width || params_last_line_contains_comment {
-                result.push_str(&indent.to_string_with_newline(context.config));
-            }
             result.push(')');
         }
     }
@@ -2617,9 +2582,7 @@ fn rewrite_fn_base(
             }
         };
         let ret_shape = if ret_should_indent {
-            if context.config.style_edition() <= StyleEdition::Edition2021
-                || context.config.indent_style() == IndentStyle::Visual
-            {
+            if context.config.indent_style() == IndentStyle::Visual {
                 let indent = if param_str.is_empty() {
                     // Aligning with nonexistent params looks silly.
                     force_new_line_for_brace = true;
@@ -2650,11 +2613,7 @@ fn rewrite_fn_base(
                 ret_shape
             }
         } else {
-            if context.config.style_edition() >= StyleEdition::Edition2024 {
-                if !param_str.is_empty() || !no_params_and_over_max_width {
-                    result.push(' ');
-                }
-            } else {
+            if !param_str.is_empty() || !no_params_and_over_max_width {
                 result.push(' ');
             }
 
@@ -2980,25 +2939,6 @@ fn rewrite_generics(
     overflow::rewrite_with_angle_brackets(context, ident, params, shape, generics.span)
 }
 
-fn generics_shape_from_config(
-    config: &Config,
-    shape: Shape,
-    offset: usize,
-    span: Span,
-) -> Result<Shape, ExceedsMaxWidthError> {
-    match config.indent_style() {
-        IndentStyle::Visual => shape.visual_indent(1 + offset).sub_width(offset + 2, span),
-        IndentStyle::Block => {
-            // 1 = ","
-            shape
-                .block()
-                .block_indent(config.tab_spaces())
-                .with_max_width(config)
-                .sub_width(1, span)
-        }
-    }
-}
-
 fn rewrite_where_clause_rfc_style(
     context: &RewriteContext<'_>,
     predicates: &[ast::WherePredicate],
@@ -3140,7 +3080,7 @@ fn rewrite_bounds_on_where_clause(
         DefinitiveListTactic::Vertical
     };
 
-    let preserve_newline = context.config.style_edition() <= StyleEdition::Edition2021;
+    let preserve_newline = false;
 
     let fmt = ListFormatting::new(shape, context.config)
         .tactic(shape_tactic)

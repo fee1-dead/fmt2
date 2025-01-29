@@ -1,4 +1,3 @@
-// rustfmt-style_edition: 2024
 // rustfmt-wrap_comments: true
 // rustfmt-hard_tabs: true
 

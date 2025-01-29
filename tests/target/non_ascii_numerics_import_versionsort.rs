@@ -1,5 +1,3 @@
-// rustfmt-style_edition: 2024
-
 // versionsorted
 pub use print0msg;
 pub use printémsg;

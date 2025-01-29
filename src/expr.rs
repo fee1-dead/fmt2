@@ -14,7 +14,7 @@ use crate::comment::{
     recover_comment_removed, rewrite_comment, rewrite_missing_comment,
 };
 use crate::config::lists::*;
-use crate::config::{Config, ControlBraceStyle, HexLiteralCase, IndentStyle, StyleEdition};
+use crate::config::{Config, ControlBraceStyle, HexLiteralCase, IndentStyle};
 use crate::lists::{
     ListFormatting, Separator, definitive_tactic, itemize_list, shape_for_tactic,
     struct_lit_formatting, struct_lit_shape, struct_lit_tactic, write_list,
@@ -1293,7 +1293,6 @@ fn rewrite_string_lit(context: &RewriteContext<'_>, span: Span, shape: Shape) ->
             .lines()
             .dropping_back(1)
             .all(|line| line.ends_with('\\'))
-            && context.config.style_edition() >= StyleEdition::Edition2024
         {
             return Ok(string_lit.to_owned());
         } else {

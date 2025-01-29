@@ -211,7 +211,13 @@ fn long_patterns() {
     };
 
     // with version=One we don't wrap long array patterns
-    let [aaaaaaaaaaaaaaaa, bbbbbbbbbbbbbbb, cccccccccccccccccc, dddddddddddddddddd] = opt else {
+    let [
+        aaaaaaaaaaaaaaaa,
+        bbbbbbbbbbbbbbb,
+        cccccccccccccccccc,
+        dddddddddddddddddd,
+    ] = opt
+    else {
         return;
     };
 
@@ -255,31 +261,20 @@ fn with_trailing_try_operator() {
 
 fn issue5901() {
     #[cfg(target_os = "linux")]
-    let Some(x) = foo
-    else {
-        todo!()
-    };
+    let Some(x) = foo else { todo!() };
 
     #[cfg(target_os = "linux")]
     // Some comments between attributes and let-else statement
-    let Some(x) = foo
-    else {
-        todo!()
-    };
+    let Some(x) = foo else { todo!() };
 
     #[cfg(target_os = "linux")]
     #[cfg(target_arch = "x86_64")]
-    let Some(x) = foo
-    else {
-        todo!()
-    };
+    let Some(x) = foo else { todo!() };
 
     // The else block will be multi-lined because attributes and comments before `let`
     // are included when calculating max width
     #[cfg(target_os = "linux")]
     #[cfg(target_arch = "x86_64")]
     // Some comments between attributes and let-else statement
-    let Some(x) = foo() else {
-        todo!()
-    };
+    let Some(x) = foo() else { todo!() };
 }

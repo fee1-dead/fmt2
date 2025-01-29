@@ -22,7 +22,7 @@ fn foo() {
     );
 
     // #1063
-    foo(x.0 .0);
+    foo(x.0.0);
 }
 
 fn a() {
@@ -89,12 +89,12 @@ fn issue1725() {
 }
 
 fn issue_4355() {
-    let _ = ((1,),).0 .0;
+    let _ = ((1,),).0.0;
 }
 
 // https://github.com/rust-lang/rustfmt/issues/4410
 impl Drop for LockGuard {
     fn drop(&mut self) {
-        LockMap::unlock(&self.0 .0, &self.0 .1);
+        LockMap::unlock(&self.0.0, &self.0.1);
     }
 }

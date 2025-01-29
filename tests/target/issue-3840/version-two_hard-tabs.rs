@@ -1,5 +1,4 @@
 // rustfmt-hard_tabs: true
-// rustfmt-style_edition: 2024
 
 impl<
 	Target: FromEvent<A> + FromEvent<B>,

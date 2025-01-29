@@ -225,8 +225,8 @@ mod nested {
     #[allow(missing_docs)]
     trait Foo {
         #[must_use] /* comment
-                     * that wrappes to
-                     * the next line */
+         * that wrappes to
+         * the next line */
         fn bar() {}
     }
 

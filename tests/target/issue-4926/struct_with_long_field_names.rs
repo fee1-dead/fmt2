@@ -10,15 +10,12 @@ struct X {
 }
 
 fn test(x: X) {
-    let y = matches!(
-        x,
-        X {
-            really_really_long_field_a: 10,
-            really_really_really_long_field_b: 10,
-            really_really_really_really_long_field_c: 10,
-            really_really_really_really_really_long_field_d: 10,
-            really_really_really_really_really_really_long_field_e: 10,
-            ..
-        }
-    );
+    let y = matches!(x, X {
+        really_really_long_field_a: 10,
+        really_really_really_long_field_b: 10,
+        really_really_really_really_long_field_c: 10,
+        really_really_really_really_really_long_field_d: 10,
+        really_really_really_really_really_really_long_field_e: 10,
+        ..
+    });
 }

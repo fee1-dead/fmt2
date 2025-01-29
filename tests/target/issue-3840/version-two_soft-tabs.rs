@@ -1,5 +1,3 @@
-// rustfmt-style_edition: 2024
-
 impl<
     Target: FromEvent<A> + FromEvent<B>,
     A: Widget2<Ctx = C>,

@@ -17,17 +17,14 @@ fn test(x: X) {
                     let h = {
                         let i = {
                             let j = {
-                                matches!(
-                                    x,
-                                    X {
-                                        really_really_long_field_a: 10,
-                                        really_really_really_long_field_b: 10,
-                                        really_really_really_really_long_field_c: 10,
-                                        really_really_really_really_really_long_field_d: 10,
-                                        really_really_really_really_really_really_long_field_e: 10,
-                                        ..
-                                    }
-                                )
+                                matches!(x, X {
+                                    really_really_long_field_a: 10,
+                                    really_really_really_long_field_b: 10,
+                                    really_really_really_really_long_field_c: 10,
+                                    really_really_really_really_really_long_field_d: 10,
+                                    really_really_really_really_really_really_long_field_e: 10,
+                                    ..
+                                })
                             };
                             j
                         };
