@@ -9,7 +9,7 @@ use std::borrow::Cow;
 
 use rustc_ast as ast;
 use rustc_span::symbol::Ident;
-use rustc_span::{BytePos, Span};
+use rustc_span::{BytePos, DUMMY_SP, Span};
 use tracing::debug;
 
 use crate::comment::combine_strs_with_missing_comments;
@@ -100,6 +100,19 @@ impl HeaderPart {
         HeaderPart {
             snippet,
             span: vis.span,
+        }
+    }
+
+    pub(crate) fn safety(safety: ast::Safety) -> Self {
+        let (snippet, span) = match safety {
+            ast::Safety::Unsafe(span) => ("unsafe", span),
+            ast::Safety::Safe(span) => ("safe", span),
+            ast::Safety::Default => ("", DUMMY_SP),
+        };
+
+        HeaderPart {
+            snippet: Cow::from(snippet),
+            span,
         }
     }
 

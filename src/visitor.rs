@@ -10,6 +10,7 @@ use crate::attr::*;
 use crate::comment::{CodeCharKind, CommentCodeSlices, contains_comment, rewrite_comment};
 use crate::config::{BraceStyle, Config, MacroSelector};
 use crate::coverage::transform_missing_snippet;
+use crate::header::{HeaderPart, format_header};
 use crate::items::{
     FnBraceStyle, FnSig, ItemVisitorKind, StaticParts, StructParts, format_impl, format_trait,
     format_trait_alias, is_mod_decl, is_use_item, rewrite_extern_crate, rewrite_type_alias,
@@ -24,8 +25,8 @@ use crate::source_map::{LineRangeUtils, SpanUtils};
 use crate::spanned::Spanned;
 use crate::stmt::Stmt;
 use crate::utils::{
-    self, contains_skip, count_newlines, depr_skip_annotation, format_safety, inner_attributes,
-    last_line_width, mk_sp, ptr_vec_to_ref_vec, rewrite_ident, starts_with_newline, stmt_expr,
+    self, contains_skip, count_newlines, depr_skip_annotation, inner_attributes, last_line_width,
+    mk_sp, ptr_vec_to_ref_vec, starts_with_newline, stmt_expr,
 };
 use crate::{ErrorKind, FormatReport, FormattingError};
 
@@ -917,14 +918,16 @@ impl<'b, 'a: 'b> FmtVisitor<'a> {
         ident: symbol::Ident,
         attrs: &[ast::Attribute],
     ) {
-        let vis_str = utils::format_visibility(&self.get_context(), vis);
-        self.push_str(&*vis_str);
-        self.push_str(format_safety(safety));
-        self.push_str("mod ");
-        // Calling `to_owned()` to work around borrow checker.
-        let ident_str = rewrite_ident(&self.get_context(), ident).to_owned();
-        self.push_str(&ident_str);
-
+        let context = self.get_context();
+        let header = vec![
+            HeaderPart::visibility(&context, vis),
+            HeaderPart::safety(safety),
+            HeaderPart::keyword(&context, "mod", vis.span.shrink_to_hi().until(ident.span)),
+            HeaderPart::ident(&context, ident),
+        ];
+        let header = format_header(&context, self.shape(), header);
+        self.push_str(&header);
+        // FIXME(new): comments between the ident and the inline module. + tests
         if let ast::ModKind::Loaded(ref items, ast::Inline::Yes, ref spans, _) = mod_kind {
             let ast::ModSpans {
                 inner_span,
