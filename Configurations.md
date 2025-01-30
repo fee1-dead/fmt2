@@ -2692,6 +2692,14 @@ By default this option is set as a percentage of [`max_width`](#max_width) provi
 
 See also [`max_width`](#max_width) and [`use_small_heuristics`](#use_small_heuristics)
 
+## `style_edition`
+
+This option has no effect.
+
+- **Default value**: `""`
+- **Possible values**: Any string
+- **Stable**: Yes
+
 ## `tab_spaces`
 
 Number of spaces per tab
@@ -3048,6 +3056,14 @@ fn main() {
     let lorem = ipsum.map(|dolor| dolor.sit())?;
 }
 ```
+
+## `version`
+
+This option has no effect.
+
+- **Default value**: `""`
+- **Possible values**: Any string
+- **Stable**: Yes
 
 ## `where_single_line`
 

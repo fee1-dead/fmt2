@@ -12,7 +12,7 @@ use rustc_span::symbol::Ident;
 use rustc_span::{BytePos, Span};
 use tracing::debug;
 
-use crate::comment::{FindUncommented, combine_strs_with_missing_comments};
+use crate::comment::combine_strs_with_missing_comments;
 use crate::rewrite::RewriteContext;
 use crate::shape::Shape;
 use crate::source_map::SpanUtils;

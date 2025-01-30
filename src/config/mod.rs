@@ -149,8 +149,8 @@ create_config! {
         "Minimum number of blank lines which must be put between items";
     edition: EditionConfig, true, "The edition of the parser (RFC 2052)";
     // FIXME(new): accept
-//    style_edition: StyleEditionConfig, true, "The edition of the Style Guide (RFC 3338)";
-//    version: VersionConfig, false, "Version of formatting rules";
+    style_edition: StyleEditionConfig, true, "(REMOVED) The edition of the Style Guide (RFC 3338)";
+    version: VersionConfig, false, "(REMOVED) Version of formatting rules";
     inline_attribute_width: InlineAttributeWidth, false,
         "Write an item and its attribute on the same line \
         if their combined width is below a threshold";
@@ -721,6 +721,8 @@ match_block_trailing_comma = false
 blank_lines_upper_bound = 1
 blank_lines_lower_bound = 0
 edition = "2015"
+style_edition = ""
+version = ""
 inline_attribute_width = 0
 format_generated_files = true
 generated_marker_line_search_limit = 5

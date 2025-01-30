@@ -580,6 +580,8 @@ config_option_with_default!(
     BlankLinesUpperBound, usize, _ => 1;
     BlankLinesLowerBound, usize, _ => 0;
     EditionConfig, Edition, _ => Edition::Edition2015;
+    StyleEditionConfig, String, _ => String::new();
+    VersionConfig, String, _ => String::new();
     InlineAttributeWidth, usize, _ => 0;
     FormatGeneratedFiles, bool, _ => true;
     GeneratedMarkerLineSearchLimit, usize, _ => 5;
