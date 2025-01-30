@@ -8,14 +8,15 @@
 use std::borrow::Cow;
 
 use rustc_ast as ast;
-use rustc_span::Span;
 use rustc_span::symbol::Ident;
+use rustc_span::{BytePos, Span};
 use tracing::debug;
 
-use crate::comment::combine_strs_with_missing_comments;
+use crate::comment::{FindUncommented, combine_strs_with_missing_comments};
 use crate::rewrite::RewriteContext;
 use crate::shape::Shape;
-use crate::utils::rewrite_ident;
+use crate::source_map::SpanUtils;
+use crate::utils::{mk_sp, rewrite_ident};
 
 pub(crate) fn format_header(
     context: &RewriteContext<'_>,
@@ -100,5 +101,13 @@ impl HeaderPart {
             snippet,
             span: vis.span,
         }
+    }
+
+    /// Given a `span` that points at `/* comment */ keyword /* comment */`, returns
+    /// a `HeaderPart` representing that keyword.
+    pub(crate) fn keyword(context: &RewriteContext<'_>, keyword: &'static str, span: Span) -> Self {
+        let lo = context.snippet_provider.span_before(span, keyword);
+        let hi = lo + BytePos(keyword.len() as u32);
+        Self::new(keyword, mk_sp(lo, hi))
     }
 }
